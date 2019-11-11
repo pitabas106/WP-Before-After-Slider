@@ -5,7 +5,7 @@
  * Description: This plugin is designed to compare two different images.
  * Version:     1.0.0
  * Author:      Pitabas Behera
- * Author URI:  https://github.io
+ * Author URI:  https://github.io/pitabas106
  * License:     GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: wp-before-after-slider
@@ -33,6 +33,8 @@ define( 'WP_BAS_INC_DIR', trailingslashit ( WP_BAS_DIR . 'inc' ) );
 define( 'WP_BAS_ASSETS_DIR', trailingslashit ( WP_BAS_DIR . 'assets' ) );
 
 define( 'WP_BAS_VERSION', '1.0.0' );
+
+define( 'WPBAS_NAME', 'wpbaslider' );
 
 define( 'WPBAS_NAME_SPACE', '__wpbas__' );
 
@@ -66,3 +68,5 @@ function wp_bas_fail_php_version() {
 	$html_message = sprintf( '<div class="error">%s</div>', wpautop( $message ) );
 	echo wp_kses_post( $html_message );
 }
+
+

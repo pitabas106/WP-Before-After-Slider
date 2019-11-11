@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="wpbas-page-wrap">
 
         <hr class="wp-header-end">
-        <h3><?php echo __( 'All Sliders', 'wp-before-after-slider' ) ?></h3>
+        <h3><?php echo __( 'All Sliders', 'wp-before-after-slider' ); ?></h3>
         <table class="widefat" cellspacing="0">
             <thead>
                 <tr>
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <td><pre>[wpbaslider name="<?php esc_html_e( $slider ); ?>"]</pre></td>
                             <td>
                                 <div class="wpbas-actions wpbas-actions-list">
-                                    <a onclick="wpbas_app.updateSliderSetting( '<?php echo esc_attr( $slider ); ?>' ); return false;" class="wpbas-icon-setting wpbas-icon-btn" href="#" title="<?php esc_attr_e( 'Setting', 'wp-before-after-slider' ); ?>"></a>
+                                    <a class="wpbas-icon-setting wpbas-icon-btn" href="<?php echo esc_url( admin_url( 'admin.php?page=wpbaslider-settings&slider='.$slider ) ); ?>" title="<?php esc_attr_e( 'Setting', 'wp-before-after-slider' ); ?>"></a>
                                     <a class="wpbas-icon-edit wpbas-icon-btn" href="<?php echo esc_url( admin_url( 'admin.php?page=add-wpbaslider&slider='.$slider ) ); ?>" title="<?php echo __( 'Edit', 'wp-before-after-slider' ); ?>"></a>
                                     <a onclick="wpbas_app.deleteSlidersByName( '<?php echo esc_attr( $slider ); ?>' ); return false;" class="wpbas-icon-delete wpbas-icon-btn" href="#" title="<?php esc_attr_e( 'Delete', 'wp-before-after-slider' ); ?>"></a>
                                 </div>

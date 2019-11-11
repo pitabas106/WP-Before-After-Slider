@@ -20,15 +20,27 @@ $slider_name_display = str_replace('_', ' ', $slider_name );
     <?php require_once( WP_BAS_INC_DIR . "/admin/templates/slider-header.php" ); ?>
 
     <div class="wpbas-page-wrap">
+		
 
         <hr class="wp-header-end">
+
+        <?php if( empty( $slider_name ) ) : ?>
+			<div class="error notice" style="50px 0 0 0px;">
+                <p><?php _e( 'Please create slider to add/edit slides.', 'wp-before-after-slider' ); ?></p>
+            </div>
+        	<?php return;  ?>
+		<?php endif; ?>
+
         <h3>
-        	<?php echo __( 'Edit- ', 'wp-before-after-slider' ). $slider_name_display; ?> 
+        	<?php echo __( 'Edit - ', 'wp-before-after-slider' ). $slider_name_display; ?> 
         	<span class="wpbas-version"><?php echo __( 'Shortcode: ', 'wp-before-after-slider' ); ?>[wpbaslider name="<?php echo $slider_name_display; ?>"]</span>
-        	<!-- <span class="wp-menu-image dashicons-before dashicons-admin-generic"><br></span> -->
-            <a href="#TB_inline?height=400&amp;width=600&amp;inlineId=wpbas-add-settings" class="thickbox button button-primary"><?php echo __( 'Slider Settings', 'wp-before-after-slider' ); ?></a>
+
+            <a class="button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpbaslider-settings&slider='.$slider_name ) ); ?>">
+            	<?php echo __( 'Slider Settings', 'wp-before-after-slider' ); ?>
+        	</a>
         </h3>
 
+		
 
         <div class="wpbas-columns-2" id="poststuff">
         	<div class="wpbas-left-column">

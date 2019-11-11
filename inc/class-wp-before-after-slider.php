@@ -25,6 +25,22 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
          */
         private static $instance;
 
+        /* Slider setttings  */
+        public $_s_slider_type;
+        public $_s_default_offset_pct;
+        public $_s_click_to_move;
+        public $_s_move_with_handle_only;
+        public $_s_move_slider_on_hover;
+        public $_s_no_overlay;
+        public $_s_orientation;
+        public $_slider_name;
+        public $_slider_width;
+        public $_s_slider_paginations;
+        public $_s_slider_nex_prev;
+        public $_s_show_slider_title;
+
+        /* Slider fields array */
+        public $_slide_fields_data = array();
 
         /**
          * Returns the *Singleton* instance of this class.
@@ -47,7 +63,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
          */
         public function __construct() {
 
-            //add_action for plugin shortcode
+            //add_action for plugin i18n
             add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 
             //add_action for slider admin menu
@@ -56,19 +72,22 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
             //add_action for register admin JS/CSS
             add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
+            //add_action for frontend register JS/CSS
+            add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
+
             //add_action for remove admin notice
             add_action( 'admin_head', array( __CLASS__, 'remove_notice_actions' ) );
 
             //add_action create slider method
             add_action( 'wp_ajax_wpbas_create_slider_ajax', array( $this, 'wpbas_create_slider_ajax' ) );
 
-            //add_action create slider method
+            //add_action get all sliders
             add_action( 'wp_ajax_wpbas_get_all_sliders', array( $this, 'wpbas_get_all_sliders' ) );
 
             //add_action create slide
             add_action( 'wp_ajax_wpbas_add_slide', array( $this, 'wpbas_add_slide' ) );
 
-            //add_action create slide
+            //add_action get all slides
             add_action( 'wp_ajax_wpbas_get_all_slides', array( $this, 'wpbas_get_all_slides_ajax' ) );
 
             //add_action delete slide
@@ -77,7 +96,263 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
             //add_action delete slider 
             add_action( 'wp_ajax_wpbas_delete_slider_by_name', array( $this, 'wpbas_delete_slider_by_name' ) );
 
+            //add slider forntend shortcode 
+            add_shortcode( 'wpbaslider', array( $this, 'render_wpbaslider_shortcode' ) );
+
+            //Save slider settings 
+            add_action( 'load-wp-ba-slider_page_wpbaslider-settings', array( $this, 'save_slider_settings' ) );
+
+        }
+
+
+        /**
+         * Register CSS and JS files
+         *
+         * @since 1.0.0
+         * @return void
+         */
+        public function save_slider_settings() {
             
+            if( ! empty( $_POST ) && $_POST['action'] == 'wpbas_settings' ) {
+
+                if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'wpbas_slider_settings_nonce' ) ) {
+                  die( 'Security check' );
+                }
+
+                $posted_data = stripslashes_deep( $_POST );
+                $slider_name = sanitize_text_field( $posted_data['slider_name'] );
+                $slider_name = sanitize_text_field( $posted_data['slider_name'] );
+                unset( $posted_data['_wpnonce'] );
+                unset( $posted_data['_wp_http_referer'] );
+                unset( $posted_data['submit'] );
+                $settings_array = maybe_serialize( $posted_data );
+
+                if( !empty( $slider_name ) && !empty( $settings_array ) ) {
+                    update_option( WPBAS_NAME_SPACE.$slider_name.'_settings', $settings_array );
+                    add_action( 'wpbas_admin_notices', array( $this, 'wpbas_setting_success_notice' ) );
+
+                } else {
+                    add_action( 'wpbas_admin_notices', array( $this, 'wpbas_setting_error_notice' ) );
+                }
+                
+            }
+        }
+
+        /**
+         * Settings Success Notice
+         *
+         * @since 1.0.0
+         * @return void
+         */
+        public function wpbas_setting_success_notice() {
+            ?>
+            <div class="updated notice">
+                <p><?php _e( 'Setting has been saved, Awesome!', 'wp-before-after-slider' ); ?></p>
+            </div>
+            <?php
+        }
+
+
+        /**
+         * Settings Error Notice
+         *
+         * @since 1.0.0
+         * @return void
+         */
+        public function wpbas_setting_error_notice() {
+            ?>
+            <div class="error notice">
+                <p><?php _e( 'There has been an error. Please try again!', 'wp-before-after-slider' ); ?></p>
+            </div>
+            <?php
+        }
+
+
+        /**
+         * Register CSS and JS files
+         *
+         * @since 1.0.0
+         * @return void
+         */
+        public function register_scripts() {
+            // Bxslider Style
+            wp_register_style( 'bxslider_style', plugins_url( 'assets/libs/bxslider/css/jquery.bxslider.min.css', WP_BAS_FILE ) );
+
+            // Twentytwenty Style
+            wp_register_style( 'twentytwenty_style', plugins_url( 'assets/libs/twentytwenty/css/twentytwenty-no-compass.css', WP_BAS_FILE ) );
+
+            // Custom Style
+            wp_register_style( 'wpbas_style', plugins_url( 'assets/css/wpbas.css', WP_BAS_FILE ) );
+
+            // Bxslider JS
+            wp_register_script( 'bxslider_script', plugins_url( 'assets/libs/bxslider/js/jquery.bxslider.min.js', WP_BAS_FILE ), array( 'jquery' ), WP_BAS_VERSION, true );
+
+            // Event Move JS
+            wp_register_script( 'event_move_script', plugins_url( 'assets/libs/twentytwenty/js/jquery.event.move.js', WP_BAS_FILE ), array( 'jquery' ), WP_BAS_VERSION, true );
+
+            // Twentytwenty JS
+            wp_register_script( 'twentytwenty_script', plugins_url( 'assets/libs/twentytwenty/js/jquery.twentytwenty.js', WP_BAS_FILE ), array( 'jquery', 'event_move_script' ), WP_BAS_VERSION, true );
+
+            // Custom JS
+            wp_register_script( 'wpbas-frontend-script', plugins_url( 'assets/js/wpbas.js', WP_BAS_FILE ), array( 'jquery', 'twentytwenty_script' ), WP_BAS_VERSION );
+
+            // Set Ajax URL, Nonce and Loading message
+            wp_localize_script( 'wpbas-frontend-script', 'WPBAS', array(
+                "ajaxurl"          => admin_url( 'admin-ajax.php' ),
+                "ajax_nonce"       => wp_create_nonce( 'wpbas_slider_nonce' ),
+                "loading_msg"      => esc_html__( 'Please wait Slider is loading.', 'wp-before-after-slider' ),
+            ));
+        }
+
+
+        /**
+         * Frontend Slider shortcode
+         * 
+         * @param shortcode param $atts
+         * @since  1.0.0
+         * @return void
+         */
+        public function render_wpbaslider_shortcode( $atts ) {
+
+            /* Enqueue CSS files */
+            wp_enqueue_style( 'bxslider_style' );
+            wp_enqueue_style( 'twentytwenty_style' );
+            wp_enqueue_style( 'wpbas_style' );
+
+            /* Enqueue JS files */
+            wp_enqueue_script( 'bxslider_script' );
+            wp_enqueue_script( 'wpbas-frontend-script' );
+
+            ob_start();
+
+            /* Render Slider Template */
+            $this->render_wpbaslider( $atts );
+
+            $slider_html = ob_get_contents();
+            ob_end_clean();
+
+            return $slider_html;
+        }
+
+        /**
+         * Render Fronted Slider
+         *
+         * @param shortcode param $atts
+         * @since  1.0.0
+         * @return void
+         */
+        public function render_wpbaslider( $atts ) {
+
+            $slider_name = $atts['name'];
+            $setting_slug = WPBAS_NAME_SPACE.$slider_name.'_settings';
+            $this->_slider_name = $slider_name;
+            $this->get_sanitize_slider_settings( $setting_slug );
+
+            $this->get_sanitize_slider_fields( WPBAS_NAME_SPACE.$slider_name );
+
+            if( isset( $this->_slide_fields_data ) && !empty( $this->_slide_fields_data ) ) {
+
+                require_once( WP_BAS_INC_DIR . "/fronted/templates/default-slider.php" );
+
+            } else {
+
+                require_once( WP_BAS_INC_DIR . "/fronted/templates/no-slider.php" );
+
+            }
+            
+        }
+
+
+        /**
+         * Sanitize slider settings
+         *
+         * @param $setting_slug
+         * @since  1.0.0
+         * @return void
+         */
+        public function get_sanitize_slider_fields( $slider_slug ) {
+
+            $all_slides = get_option( $slider_slug );
+            $all_slides = maybe_unserialize( $all_slides );
+
+            if( isset( $all_slides ) && ! empty( $all_slides ) ) {
+
+                $count = 0;
+                
+                foreach( $all_slides as $key => $slide ) {
+                    
+                    if( is_numeric( $slide['before_thumb'] ) ) {
+                        $slide_before_img = wp_get_attachment_image_src( $slide['before_thumb'], 'full' );
+                        $slide_before_img = $slide_before_img[0];
+                    }
+
+                    if( is_numeric( $slide['after_thumb'] ) ) {
+                        $slide_after_img = wp_get_attachment_image_src( $slide['after_thumb'], 'full' );
+                        $slide_after_img = $slide_after_img[0];
+                    }
+
+                    $caption_before     = esc_attr( $slide['caption_before'] );
+                    $caption_after      = esc_attr( $slide['caption_after'] );
+
+                    $before_thumb_id    = esc_attr( $slide['before_thumb'] );
+                    $after_thumb_id     = esc_attr( $slide['after_thumb'] );
+
+                    $this->_slide_fields_data[] = array(
+                        'title'              => esc_attr( $slide['title'] ),
+                        'caption_before'     => $caption_before,
+                        'caption_after'      => $caption_after,
+                        'before_thumb_id'    => $before_thumb_id,
+                        'after_thumb_id'     => $after_thumb_id,
+                        'slide_before_img'   => $slide_before_img,
+                        'slide_after_img'    => $slide_after_img
+                    );
+                }
+            }
+
+        }
+
+        /**
+         * Sanitize slider settings
+         *
+         * @param $setting_slug
+         * @since  1.0.0
+         * @return void
+         */
+        public function get_sanitize_slider_settings( $setting_slug ) {
+ 
+            if( empty( $setting_slug ) ) {
+                return;
+            }
+
+            $slider_settings = get_option( $setting_slug );
+            
+            if( empty( $slider_settings ) ) {
+                return;
+            }
+
+            $slider_settings = maybe_unserialize( $slider_settings );
+
+            
+            $this->_s_slider_type = ( isset( $slider_settings['slider_type'] ) ) ? ( int )$slider_settings['slider_type'] : '1'; 
+            
+            $this->_s_slider_width = ( isset( $slider_settings['slider_width'] ) ) ? ( int )$slider_settings['slider_width'] : '0'; 
+
+            $this->_s_slider_paginations = ( isset( $slider_settings['slider_paginations'] ) ) ? 'true' : 'false';
+            $this->_s_slider_nex_prev = ( isset( $slider_settings['slider_nex_prev'] ) ) ? 'true' : 'false';
+            $this->_s_show_slider_title = ( isset( $slider_settings['show_slider_title'] ) ) ? 'true' : 'false';
+
+            $this->_s_default_offset_pct = ( isset( $slider_settings['default_offset_pct'] ) ) ? esc_attr( $slider_settings['default_offset_pct'] ) : ''; 
+            
+            $this->_s_orientation = ( isset( $slider_settings['orientation'] ) ) ? esc_attr( $slider_settings['orientation'] ) : 'horizontal';   
+            
+            $this->_s_no_overlay = ( !empty( $slider_settings['no_overlay'] ) ) ? 'true' : 'false';
+
+            $this->_s_move_slider_on_hover = ( isset( $slider_settings['move_slider_on_hover'] ) ) ? 'true' : 'false';
+
+            $this->_s_move_with_handle_only = ( isset( $slider_settings['move_with_handle_only'] ) ) ? 'true' : 'false';
+
+            $this->_s_click_to_move = ( isset( $slider_settings['click_to_move'] ) ) ? 'true' : 'false';
+
         }
 
 
@@ -100,13 +375,12 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                   die( 'Security check' );
                 }
 
-                $posted_data    = $_POST;
-                $posted_data    = stripslashes_deep( $posted_data );
-                $status         = 'error';
+                $slider_name = sanitize_text_field( $_POST['slider_name'] );
+                $status      = 'error';
 
-                if( ! empty( $posted_data['slider_name'] ) ) {
+                if( ! empty( $slider_name ) ) {
                     
-                    $slider_name = sanitize_text_field( $posted_data['slider_name'] );
+                    $slider_name = sanitize_text_field( $slider_name );
 
                     $all_sliders = get_option( 'wpbaslider' );
 
@@ -114,7 +388,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
 
                     if ( ( $key = array_search( $slider_name, $all_sliders ) ) !== false ) {
                         unset( $all_sliders[$key] );
-                        $all_sliders = array_values($all_sliders);
+                        $all_sliders = array_values( $all_sliders );
                         update_option( 'wpbaslider', $all_sliders );
                         delete_option( WPBAS_NAME_SPACE.$slider_name );
                     }
@@ -128,14 +402,13 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 }
 
                 $json_data = array(
-                    "status"        =>  $status,
-                    "msg"           =>  __( $msg, 'wp-before-after-slider' ),
+                    "status"        => $status,
+                    "msg"           => __( $msg, 'wp-before-after-slider' ),
                 );
 
                 wp_send_json( $json_data );
 
             }
-
 
         }
 
@@ -165,7 +438,6 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 if( ! empty( $posted_data['slider_name'] ) && 
                     ( ! empty( $posted_data['slide_id'] ) || $posted_data['slide_id'] == '0' ) ) {
                     
-
                     $slider_name = sanitize_text_field( $posted_data['slider_name'] );
                     $slide_id = ( int ) $posted_data['slide_id'];
                     
@@ -194,7 +466,6 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
 
             }
 
-
         }
 
 
@@ -210,7 +481,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
             if ( ! wp_doing_ajax() ) {
                 wp_die();
             }
-            if( ! empty( $_POST ) ) {
+            if( ! empty( $_POST ) && ! empty( $_POST['slider_name'] ) ) {
 
                 if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'wpbas_add_slides' ) ) {
                   die( 'Security check' );
@@ -220,13 +491,12 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 $posted_data    = stripslashes_deep( $posted_data );
                 $status         = 'error';
 
-                if( ! empty( $posted_data['title'] ) && 
-                    ! empty( $posted_data['before_thumb'] ) && 
+                if( ! empty( $posted_data['before_thumb'] ) && 
                     ! empty( $posted_data['after_thumb'] ) ) {
                     
-                    $caption_before = ( isset($posted_data['caption_before']) && $posted_data['caption_before'] != '') ? $posted_data['caption_before'] : __('Before', 'wp-before-after-slider');
+                    $caption_before = ( isset( $posted_data['caption_before'] ) && $posted_data['caption_before'] != '' ) ? $posted_data['caption_before'] : __( 'Before', 'wp-before-after-slider' );
                 
-                    $caption_after  = ( isset($posted_data['caption_after']) && $posted_data['caption_after'] != '') ? $posted_data['caption_after'] : __('After', 'wp-before-after-slider');
+                    $caption_after  = ( isset( $posted_data['caption_after'] ) && $posted_data['caption_after'] != '' ) ? $posted_data['caption_after'] : __( 'After', 'wp-before-after-slider' );
 
                     $slider_name = sanitize_text_field( $posted_data['slider_name'] );
                     
@@ -279,8 +549,8 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 }
 
                 $json_data = array(
-                    "status"        =>  $status,
-                    "msg"           =>  __( $msg, 'wp-before-after-slider' ),
+                    "status"        => $status,
+                    "msg"           => __( $msg, 'wp-before-after-slider' ),
                     "slider_name"   => $slider_name
                 );
 
@@ -313,13 +583,10 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 $posted_data    = $_POST;
                 $posted_data    = stripslashes_deep( $posted_data );
                 $status         = 'error';
-
     
-                $data_fetch_type = ( isset( $posted_data['slider_type'] ) && $posted_data['slider_type'] ) ?  esc_attr( $posted_data['slider_type'] ) : 'all';
+                $data_fetch_type = ( isset( $posted_data['slider_type'] ) && $posted_data['slider_type'] ) ? esc_attr( $posted_data['slider_type'] ) : 'all';
 
-               
-                $slider_name = ( isset( $posted_data['slider_name'] ) && $posted_data['slider_name'] ) ?  esc_attr( $posted_data['slider_name'] ) : '';
-
+                $slider_name = ( isset( $posted_data['slider_name'] ) && $posted_data['slider_name'] ) ? esc_attr( $posted_data['slider_name'] ) : '';
 
                 //Get slides data
                 if( !empty( $slider_name ) ) {
@@ -352,7 +619,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                             $before_thumb_id    = esc_attr( $slide['before_thumb'] );
                             $after_thumb_id     = esc_attr( $slide['after_thumb'] );
 
-                            $slide_json_data = json_encode (array(
+                            $slide_json_data = json_encode ( array(
                                 'title'              => esc_attr( $slide['title'] ),
                                 'caption_before'     => $caption_before,
                                 'caption_after'      => $caption_after,
@@ -360,7 +627,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                                 'after_thumb_id'     => $after_thumb_id,
                                 'slide_before_img'   => $slide_before_img,
                                 'slide_after_img'    => $slide_after_img
-                            ));
+                            ) );
 
                             $html_body .= '<li id="wpbas_item_'.$count.'">
                                     <textarea name="wpbas_slide_json_data" class="wpbas-slide-json-data" cols="30" rows="10" style="display: none;">'. sanitize_textarea_field( $slide_json_data ) .'</textarea>
@@ -406,14 +673,12 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                         $data        = $html_body_start . $html_body . $html_body_end;
                     }
 
-
                 } else {
                     $msg         = 'Slider name is not correct.';
                     $status      = 'error';
                     $data        = '';
                 }
 
-                
                 $json_data = array(
                     "status"     => $status,
                     "msg"        => __( $msg, 'wp-before-after-slider' ),
@@ -465,7 +730,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                                 <td><pre>[wpbaslider name="' . esc_html( $slider ) . ']</pre></td>
                                 <td>
                                     <div class="wpbas-actions wpbas-actions-list">
-                                        <a onclick="wpbas_app.updateSliderSetting(\' '. esc_attr( $slider ).' \' ); return false;" class="wpbas-icon-setting wpbas-icon-btn" href="#" title="'. esc_attr( 'Setting', 'wp-before-after-slider' ).'"></a>
+                                        <a class="wpbas-icon-setting wpbas-icon-btn" href="'. esc_url( admin_url( 'admin.php?page=wpbaslider-settings&slider='.$slider ) ).'" title="'. esc_attr( 'Setting', 'wp-before-after-slider' ).'"></a>
                                         <a class="wpbas-icon-edit wpbas-icon-btn" href="'. esc_url( admin_url( 'admin.php?page=add-wpbaslider&slider='.$slider ) ).'" title="' . esc_attr( 'Edit', 'wp-before-after-slider' ). '"></a>
                                         <a onclick="wpbas_app.deleteSlidersByName(\' '. esc_attr( $slider ).' \' ); return false;" class="wpbas-icon-delete wpbas-icon-btn" href="#" title="'. esc_attr( '1 Delete', 'wp-before-after-slider' ).'"></a>
                                     </div>
@@ -536,7 +801,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
 
                     $old_sliders = get_option( 'wpbaslider' );
                     $old_sliders = maybe_unserialize( $old_sliders );
-                    $slider_name_array = array(sanitize_text_field( $slider_name ) );
+                    $slider_name_array = array( sanitize_text_field( $slider_name ) );
                     
                     if( in_array( sanitize_text_field( $slider_name ), $old_sliders ) ) {
                         $status = 'error';
@@ -552,13 +817,13 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
 
                     if( $status == 'error' ) {
                         $msg            = '<strong>'.$slider_name.' </strong> &nbsp; name is already exists! Please try with some other Slider name.';
-                        $status         =  'eror';
-                        $slider_name    =  sanitize_text_field( $slider_name );
+                        $status         = 'eror';
+                        $slider_name    = sanitize_text_field( $slider_name );
                     } else {
                         update_option( 'wpbaslider', $udpated_sliders );
                         $msg            = 'Slider created successfully!';
-                        $status         =  'success';
-                        $slider_name    =  sanitize_text_field( $slider_name );
+                        $status         = 'success';
+                        $slider_name    = sanitize_text_field( $slider_name );
                     }
 
                 } else {
@@ -567,9 +832,9 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 }
 
                 $json_data = array(
-                    "status"        =>  $status,
-                    "msg"           =>  __( $msg, 'wp-before-after-slider' ),
-                    "slider_name"   =>  $slider_name
+                    "status"        => $status,
+                    "msg"           => __( $msg, 'wp-before-after-slider' ),
+                    "slider_name"   => $slider_name
                 );
 
                 wp_send_json( $json_data );
@@ -604,7 +869,8 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
         public static function remove_notice_actions() {
             $screen = get_current_screen();
             if ( $screen->base == 'toplevel_page_wpbaslider' 
-                || $screen->base == 'wp-ba-slider_page_add-wpbaslider' ) {
+                || $screen->base == 'wp-ba-slider_page_add-wpbaslider' 
+                || $screen->base == 'wp-ba-slider_page_wpbaslider-settings' ) {
                 remove_all_actions( 'admin_notices' );
                 remove_all_actions( 'network_admin_notices' );
                 remove_all_actions( 'user_admin_notices' );
@@ -623,9 +889,10 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
          * @return void
          */
         public function enqueue_admin_scripts( $hook ) {
-            // print_r($hook); exit;
+
             if( $hook == 'toplevel_page_wpbaslider' 
-                || $hook == 'wp-ba-slider_page_add-wpbaslider' ) {
+                || $hook == 'wp-ba-slider_page_add-wpbaslider'
+                || $hook == 'wp-ba-slider_page_wpbaslider-settings' ) {
 
                 //add thick box
                 add_thickbox();
@@ -640,8 +907,9 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 // Set Ajax URL, Nonce and Loading message
                 wp_localize_script( 'wpbas-admin-js', 'WPBAS', array(
                     "ajaxurl"                   => admin_url( 'admin-ajax.php' ),
+                    "wpbaslider_edit_url"       =>  admin_url( 'admin.php?page=add-wpbaslider&slider=' ),
                     "ajax_nonce"                => wp_create_nonce( 'wp_bas_nonce' ),
-                    "slider_name_required"      =>  __( 'Please enter slider name.', 'wp-before-after-slider' ),
+                    "slider_name_required"      => __( 'Please enter slider name.', 'wp-before-after-slider' ),
                     "reload_page_msg"           => __( 'Please reload the page and try again.', 'wp-before-after-slider' ),
                 ));
             } else {
@@ -666,6 +934,7 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
                 'manage_options', 
                 'wpbaslider', 
                 array( $this, 'wpbas_admin_all_slider' ),
+                plugins_url('wp-before-after-slider/assets/images/wpbas-icon.svg'),
                 35
             );
             
@@ -680,11 +949,19 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
 
             add_submenu_page(
                 'wpbaslider', 
-                __( 'Add/Edit Slider', 'wp-before-after-slider' ),
-                __( 'Add/Edit Slider', 'wp-before-after-slider' ),
+                __( '', 'wp-before-after-slider' ),
+                __( '', 'wp-before-after-slider' ),
                 'manage_options', 
                 'add-wpbaslider', 
                 array( $this, 'wpbas_admin_add_slider' )
+            );
+            add_submenu_page(
+                'wpbaslider', 
+                '',
+                '',
+                'manage_options', 
+                'wpbaslider-settings', 
+                array( $this, 'wpbas_slider_settings' )
             );
             // add_submenu_page(
             //     'wpbaslides', 
@@ -693,8 +970,6 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
             //     'manage_options', 
             //     array( $this, 'wpbas_admin_export_import_page' )
             // );
-
-
 
         }
 
@@ -716,16 +991,25 @@ if ( ! class_exists( 'WP_Before_After_Slider', false ) ) :
         }
 
         /**
-         * Include add slder template
+         * Include add slider template
          *
          * @since 1.0.0
          * @return void
          */
         public function wpbas_admin_add_slider() {
-
             require_once( WP_BAS_INC_DIR . "/admin/templates/slider-edit.php" );
         }
 
+        /**
+         * Include add slider settings template
+         *
+         * @since 1.0.0
+         * @return void
+         */
+        public function wpbas_slider_settings() {
+
+            require_once( WP_BAS_INC_DIR . "/admin/templates/slider-settings.php" );
+        }
 
     }
 

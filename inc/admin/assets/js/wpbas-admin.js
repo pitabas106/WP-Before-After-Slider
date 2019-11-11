@@ -36,9 +36,6 @@ jQuery( function() {
 	});
 
 
-	
-
-
 	/* Create Slider */
 	jQuery('.wpbas-add-slider').on('click', function() {
 
@@ -75,6 +72,11 @@ jQuery( function() {
 			    	$_self.parents('#new-wpbaslider-form:first').find('#wpbas-admin-notice').removeClass('wpbas-notice-error');
 			    	$_self.parents('#new-wpbaslider-form:first').find('#wpbas-admin-notice').removeClass('wpbas-error');
 			    	$_self.parents('#new-wpbaslider-form:first').find('#wpbas-admin-notice').addClass('wpbas-notice-success');
+			    	
+			    	setTimeout( function() {
+			    		window.location.href = WPBAS.wpbaslider_edit_url+result.slider_name;
+		    		}, 500);
+			    	
 			    } else {
 			    	$_self.parents('#new-wpbaslider-form:first').find('#wpbas-admin-notice').removeClass('wpbas-notice-success');
 			    	$_self.parents('#new-wpbaslider-form:first').find('#wpbas-admin-notice').addClass('wpbas-notice-error');

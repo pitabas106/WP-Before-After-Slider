@@ -1,0 +1,64 @@
+body .wpbas-slider-wrap .bx-viewport {
+  height: auto!important;
+}
+.wpbas-bxslider {
+	list-style: none;
+}
+.wpbas-bxslider li {
+	list-style: none;
+	float: left;
+}
+.no-wpbas-bxslider {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.no-wpbas-bxslider li {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+body .wpbas-slider-wrap .wpbas-title {
+	position: absolute;
+    bottom: 0;
+    text-align: center;
+    z-index: 100;
+    left: 0;
+    right: 0;
+    margin: 0;
+}
+
+body .wpbas-slider-wrap .wpbas-title span {
+	background: rgba(117, 112, 112, 0.48);
+    padding: 6px 18px;
+    color: #FFF;
+    display: inline-block;
+}
+
+body .wpbas-slider-wrap .wpbas-traditional {
+
+}
+.wpbas-t-left-column {
+	width: 50%;
+	float: left;
+}
+.wpbas-t-right-column {
+	width: 50%;
+	float: right;
+}
+.wpbas-t-caption {
+	display: block;
+    z-index: 100;
+    position: absolute;
+    background: rgba(117, 112, 112, 0.48);
+    padding: 5px 18px;
+    top: 0;
+    color: #FFF;
+}
+.before-caption.wpbas-t-caption {
+	left: 0;
+	
+}
+.after-caption.wpbas-t-caption {
+	right: 0;
+}
